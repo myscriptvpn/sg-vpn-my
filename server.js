@@ -1,18 +1,19 @@
-const WebSocket = require('ws');
-const net = require('net');
-const dgram = require('dgram');
-const fetch = require('node-fetch');
-const http = require('http');
-const https = require('https');
-const url = require('url');
+const WebSocket = require("ws");
+const net = require("net");
+const dgram = require("dgram");
+const fetch = require("node-fetch");
+const http = require("http");
+const https = require("https");
+const url = require("url");
 
 // Constants
-const horse = Buffer.from("dHJvamFu", 'base64').toString(); // "trojan"
-const flash = Buffer.from("dm1lc3M=", 'base64').toString(); // "vmess"
-const v2 = Buffer.from("djJyYXk=", 'base64').toString(); // "v2ray"
-const neko = Buffer.from("Y2xhc2g=", 'base64').toString(); // "clash"
+const horse = Buffer.from("dHJvamFu", "base64").toString(); // "trojan"
+const flash = Buffer.from("dm1lc3M=", "base64").toString(); // "vmess"
+const v2 = Buffer.from("djJyYXk=", "base64").toString(); // "v2ray"
+const neko = Buffer.from("Y2xhc2g=", "base64").toString(); // "clash"
 
-const KV_PRX_URL = "https://raw.githubusercontent.com/backup-heavenly-demons/gateway/refs/heads/main/kvProxyList.json";
+const KV_PRX_URL =
+  "https://raw.githubusercontent.com/backup-heavenly-demons/gateway/refs/heads/main/kvProxyList.json";
 const DNS_SERVER_ADDRESS = "8.8.8.8";
 const DNS_SERVER_PORT = 53;
 const WS_READY_STATE_OPEN = 1;
@@ -29,20 +30,105 @@ const REGION_MAP = {
   SOUTHASIA: ["IN", "BD", "PK", "LK", "NP", "AF", "BT", "MV"],
   CENTRALASIA: ["KZ", "UZ", "TM", "KG", "TJ"],
   NORTHASIA: ["RU"],
-  MIDDLEEAST: ["AE", "SA", "IR", "IQ", "JO", "IL", "YE", "SY", "OM", "KW", "QA", "BH", "LB"],
+  MIDDLEEAST: [
+    "AE",
+    "SA",
+    "IR",
+    "IQ",
+    "JO",
+    "IL",
+    "YE",
+    "SY",
+    "OM",
+    "KW",
+    "QA",
+    "BH",
+    "LB",
+  ],
   CIS: ["RU", "UA", "BY", "KZ", "UZ", "AM", "GE", "MD", "TJ", "KG", "TM", "AZ"],
   WESTEUROPE: ["FR", "DE", "NL", "BE", "AT", "CH", "IE", "LU", "MC"],
   EASTEUROPE: ["PL", "CZ", "SK", "HU", "RO", "BG", "MD", "UA", "BY"],
   NORTHEUROPE: ["SE", "FI", "NO", "DK", "EE", "LV", "LT", "IS"],
-  SOUTHEUROPE: ["IT", "ES", "PT", "GR", "HR", "SI", "MT", "AL", "BA", "RS", "ME", "MK"],
-  EUROPE: ["FR", "DE", "NL", "BE", "AT", "CH", "IE", "LU", "MC", "PL", "CZ", "SK", "HU", "RO", "BG", "MD", "UA", "BY", "SE", "FI", "NO", "DK", "EE", "LV", "LT", "IS", "IT", "ES", "PT", "GR", "HR", "SI", "MT", "AL", "BA", "RS", "ME", "MK"],
+  SOUTHEUROPE: [
+    "IT",
+    "ES",
+    "PT",
+    "GR",
+    "HR",
+    "SI",
+    "MT",
+    "AL",
+    "BA",
+    "RS",
+    "ME",
+    "MK",
+  ],
+  EUROPE: [
+    "FR",
+    "DE",
+    "NL",
+    "BE",
+    "AT",
+    "CH",
+    "IE",
+    "LU",
+    "MC",
+    "PL",
+    "CZ",
+    "SK",
+    "HU",
+    "RO",
+    "BG",
+    "MD",
+    "UA",
+    "BY",
+    "SE",
+    "FI",
+    "NO",
+    "DK",
+    "EE",
+    "LV",
+    "LT",
+    "IS",
+    "IT",
+    "ES",
+    "PT",
+    "GR",
+    "HR",
+    "SI",
+    "MT",
+    "AL",
+    "BA",
+    "RS",
+    "ME",
+    "MK",
+  ],
   AFRICA: ["ZA", "NG", "EG", "MA", "KE", "DZ", "TN", "GH", "CI", "SN", "ET"],
   NORTHAMERICA: ["US", "CA", "MX"],
   SOUTHAMERICA: ["BR", "AR", "CL", "CO", "PE", "VE", "EC", "UY", "PY", "BO"],
-  LATAM: ["MX", "BR", "AR", "CL", "CO", "PE", "VE", "EC", "UY", "PY", "BO", "CR", "GT", "PA", "DO", "HN", "NI", "SV"],
+  LATAM: [
+    "MX",
+    "BR",
+    "AR",
+    "CL",
+    "CO",
+    "PE",
+    "VE",
+    "EC",
+    "UY",
+    "PY",
+    "BO",
+    "CR",
+    "GT",
+    "PA",
+    "DO",
+    "HN",
+    "NI",
+    "SV",
+  ],
   AMERICA: ["US", "CA", "MX", "BR", "AR", "CL", "CO", "PE", "VE", "EC"],
   OCEANIA: ["AU", "NZ", "PG", "FJ"],
-  GLOBAL: []
+  GLOBAL: [],
 };
 
 class GatewayServer {
@@ -60,27 +146,27 @@ class GatewayServer {
   // Health check handler
   handleHealthCheck(req, res) {
     const healthData = {
-      status: 'healthy',
+      status: "healthy",
       timestamp: new Date().toISOString(),
-      service: 'railway-gateway',
+      service: "railway-gateway",
       uptime: process.uptime(),
       memory: process.memoryUsage(),
-      version: process.env.npm_package_version || '1.0.0',
+      version: process.env.npm_package_version || "1.0.0",
       features: {
         websocket: true,
         tcp: true,
         udp: true,
-        protocols: ['trojan', 'vmess', 'ss']
+        protocols: ["trojan", "vmess", "ss"],
       },
       network: {
         udp_supported: true,
-        outbound_allowed: true
-      }
+        outbound_allowed: true,
+      },
     };
 
     res.writeHead(200, {
-      'Content-Type': 'application/json',
-      ...this.CORS_HEADER_OPTIONS
+      "Content-Type": "application/json",
+      ...this.CORS_HEADER_OPTIONS,
     });
     res.end(JSON.stringify(healthData, null, 2));
   }
@@ -94,62 +180,64 @@ class GatewayServer {
   // API endpoint untuk mendapatkan daftar proxy
   async handleApiRequest(req, res, parsedUrl) {
     try {
-      if (parsedUrl.pathname === '/api/proxies') {
+      if (parsedUrl.pathname === "/api/proxies") {
         const proxies = await this.getPrxList(process.env.PRX_BANK_URL);
-        const format = parsedUrl.query.format || 'json';
-        
-        if (format === 'text') {
-          const proxyText = proxies.map(p => 
-            `${p.country} - ${p.prxIP}:${p.prxPort}`
-          ).join('\n');
-          
+        const format = parsedUrl.query.format || "json";
+
+        if (format === "text") {
+          const proxyText = proxies
+            .map((p) => `${p.country} - ${p.prxIP}:${p.prxPort}`)
+            .join("\n");
+
           res.writeHead(200, {
-            'Content-Type': 'text/plain',
-            ...this.CORS_HEADER_OPTIONS
+            "Content-Type": "text/plain",
+            ...this.CORS_HEADER_OPTIONS,
           });
           res.end(proxyText);
           return;
         }
-        
+
         res.writeHead(200, {
-          'Content-Type': 'application/json',
-          ...this.CORS_HEADER_OPTIONS
+          "Content-Type": "application/json",
+          ...this.CORS_HEADER_OPTIONS,
         });
         res.end(JSON.stringify(proxies, null, 2));
         return;
       }
     } catch (error) {
-      console.error('API error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Internal server error' }));
+      console.error("API error:", error);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Internal server error" }));
     }
   }
 
   // Main HTTP request handler (Cyberpunk Dashboard Modern UI)
   async handleHttpRequest(req, res) {
     const parsedUrl = url.parse(req.url, true);
-    
-    if (req.method === 'OPTIONS') {
+
+    if (req.method === "OPTIONS") {
       this.handleCorsPreflight(req, res);
       return;
     }
-    
-    if (parsedUrl.pathname === '/health') {
+
+    if (parsedUrl.pathname === "/health") {
       this.handleHealthCheck(req, res);
       return;
     }
-    
-    if (parsedUrl.pathname.startsWith('/api/')) {
+
+    if (parsedUrl.pathname.startsWith("/api/")) {
       await this.handleApiRequest(req, res, parsedUrl);
       return;
     }
-    
-    if (parsedUrl.pathname === '/') {
-      const currentHost = req.headers.host || 'localhost:3000';
-      const protocolWs = req.headers['x-forwarded-proto'] === 'https' ? 'wss' : 'ws';
-      const protocolHttp = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-      
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+
+    if (parsedUrl.pathname === "/") {
+      const currentHost = req.headers.host || "localhost:3000";
+      const protocolWs =
+        req.headers["x-forwarded-proto"] === "https" ? "wss" : "ws";
+      const protocolHttp =
+        req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+
+      res.writeHead(200, { "Content-Type": "text/html" });
       res.end(`
         <!DOCTYPE html>
         <html lang="en">
@@ -371,7 +459,7 @@ class GatewayServer {
                 <div class="space-y-4">
                   <div>
                     <label class="text-xs text-slate-400 font-medium mb-1.5 block">UUID / Password</label>
-                    <div class="flex gap-2">
+                    <div class="flex flex-col gap-2 mb-2">
                       <input id="uuidInput" type="text" value="853b8456-0c0b-4bfa-b3b4-b2619248a9bc" 
                              class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-blue-500 focus:outline-none transition">
                       <button id="randomUuidBtn" class="bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg text-xs transition flex items-center gap-1 whitespace-nowrap">
@@ -421,14 +509,15 @@ class GatewayServer {
                     <div class="flex gap-2 mb-2">
                       <select id="sniSelect" 
                               class="bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-purple-500 focus:outline-none transition flex-1">
-                        <option value="business.whatsapp.com">📱 business.whatsapp.com</option>
-                        <option value="media-sin6-3.cdn.whatsapp.net">📡 media-sin6-3.cdn.whatsapp.net</option>
-                        <option value="c.whatsapp.com">💬 c.whatsapp.com</option>
-                        <option value="web.whatsapp.com">🌐 web.whatsapp.com</option>
-                        <option value="v.whatsapp.net">📞 v.whatsapp.net</option>
+                        <option value="live.iflix.com">live.iflix.com</option>
+                        <option value="v.whatsapp.net">v.whatsapp.net</option>
+                        <option value="c.whatsapp.com">c.whatsapp.com</option>
+                        <option value="web.whatsapp.com">web.whatsapp.com</option>
+                        <option value="business.whatsapp.com">business.whatsapp.com</option>
+                        <option value="media-sin6-3.cdn.whatsapp.net">media-sin6-3.cdn.whatsapp.net</option>
                         <option value="custom">✏️ CUSTOM SNI...</option>
                       </select>
-                      <input id="sniInput" type="text" value="business.whatsapp.com" 
+                      <input id="sniInput" type="text" value="live.iflix.com" 
                              class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-purple-500 focus:outline-none transition"
                              placeholder="Custom SNI...">
                     </div>
@@ -437,7 +526,7 @@ class GatewayServer {
 
                   <div>
                     <label class="text-xs text-slate-400 font-medium mb-1.5 block">Nama / Remark</label>
-                    <input id="remarkInput" type="text" value="KOPI KAPAL ⚡" 
+                    <input id="remarkInput" type="text" value="VPNJATIM-SNI" 
                            class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-blue-500 focus:outline-none transition">
                   </div>
 
@@ -695,13 +784,13 @@ class GatewayServer {
       `);
       return;
     }
-    
+
     const targetReversePrx = process.env.REVERSE_PRX_TARGET;
     if (targetReversePrx) {
       await this.reverseWeb(req, res, targetReversePrx);
     } else {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not Found');
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Not Found");
     }
   }
 
@@ -721,7 +810,7 @@ class GatewayServer {
         return {};
       }
     } catch (error) {
-      console.error('Error fetching KV proxy list:', error);
+      console.error("Error fetching KV proxy list:", error);
       return {};
     }
   }
@@ -735,29 +824,31 @@ class GatewayServer {
       const response = await fetch(prxBankUrl);
       if (response.status === 200) {
         const data = await response.json();
-        
-        return data.map(proxy => {
-          const ip = proxy.prxIP || proxy.ip || proxy.server;
-          const port = proxy.prxPort || proxy.port;
-          const country = proxy.country || proxy.cc || 'XX';
-          
-          if (!ip || !port) {
-            console.warn('Invalid proxy format:', proxy);
-            return null;
-          }
-          
-          return {
-            prxIP: ip,
-            prxPort: port,
-            country: country.toUpperCase()
-          };
-        }).filter(Boolean);
+
+        return data
+          .map((proxy) => {
+            const ip = proxy.prxIP || proxy.ip || proxy.server;
+            const port = proxy.prxPort || proxy.port;
+            const country = proxy.country || proxy.cc || "XX";
+
+            if (!ip || !port) {
+              console.warn("Invalid proxy format:", proxy);
+              return null;
+            }
+
+            return {
+              prxIP: ip,
+              prxPort: port,
+              country: country.toUpperCase(),
+            };
+          })
+          .filter(Boolean);
       } else {
         console.error(`Failed to fetch proxy list: ${response.status}`);
         return [];
       }
     } catch (error) {
-      console.error('Error fetching proxy list:', error);
+      console.error("Error fetching proxy list:", error);
       return [];
     }
   }
@@ -778,43 +869,48 @@ class GatewayServer {
         port: targetUrl.port,
         path: targetUrl.pathname + targetUrl.search,
         method: request.method,
-        headers: { ...request.headers }
+        headers: { ...request.headers },
       };
 
-      options.headers['host'] = targetUrl.hostname;
-      options.headers['x-forwarded-host'] = request.headers.host;
+      options.headers["host"] = targetUrl.hostname;
+      options.headers["x-forwarded-host"] = request.headers.host;
 
-      const proxyReq = (targetUrl.protocol === 'https:' ? https : http).request(options, (proxyRes) => {
-        response.writeHead(proxyRes.statusCode, {
-          ...Object.fromEntries(Object.entries(this.CORS_HEADER_OPTIONS)),
-          ...Object.fromEntries(Object.entries(proxyRes.headers)),
-          'x-proxied-by': 'Railway Gateway'
-        });
+      const proxyReq = (targetUrl.protocol === "https:" ? https : http).request(
+        options,
+        (proxyRes) => {
+          response.writeHead(proxyRes.statusCode, {
+            ...Object.fromEntries(Object.entries(this.CORS_HEADER_OPTIONS)),
+            ...Object.fromEntries(Object.entries(proxyRes.headers)),
+            "x-proxied-by": "Railway Gateway",
+          });
 
-        proxyRes.pipe(response);
-      });
+          proxyRes.pipe(response);
+        },
+      );
 
-      proxyReq.on('error', (err) => {
-        console.error('Proxy error:', err);
+      proxyReq.on("error", (err) => {
+        console.error("Proxy error:", err);
         response.writeHead(500);
-        response.end('Proxy error');
+        response.end("Proxy error");
       });
 
-      if (request.method !== 'GET' && request.method !== 'HEAD') {
+      if (request.method !== "GET" && request.method !== "HEAD") {
         let body = [];
-        request.on('data', (chunk) => {
-          body.push(chunk);
-        }).on('end', () => {
-          proxyReq.write(Buffer.concat(body));
-          proxyReq.end();
-        });
+        request
+          .on("data", (chunk) => {
+            body.push(chunk);
+          })
+          .on("end", () => {
+            proxyReq.write(Buffer.concat(body));
+            proxyReq.end();
+          });
       } else {
         proxyReq.end();
       }
     } catch (err) {
-      console.error('Reverse web error:', err);
+      console.error("Reverse web error:", err);
       response.writeHead(500);
-      response.end('Internal server error');
+      response.end("Internal server error");
     }
   }
 
@@ -824,36 +920,57 @@ class GatewayServer {
     try {
       const parsedUrl = url.parse(request.url, true);
       const path = parsedUrl.pathname;
-      const host = request.headers.host || 'localhost';
+      const host = request.headers.host || "localhost";
 
-      console.log(`WebSocket request path: ${path} from ${request.socket.remoteAddress}`);
+      console.log(
+        `WebSocket request path: ${path} from ${request.socket.remoteAddress}`,
+      );
 
       // Format /PROXYLIST/ID,SG,JP
-      const proxyListMatch = path.match(/^\/PROXYLIST\/([A-Z]{2}(,[A-Z]{2})*)$/i);
+      const proxyListMatch = path.match(
+        /^\/PROXYLIST\/([A-Z]{2}(,[A-Z]{2})*)$/i,
+      );
       if (proxyListMatch) {
         const countryCodes = proxyListMatch[1].toUpperCase().split(",");
         const proxies = await this.getPrxList(process.env.PRX_BANK_URL);
 
         if (proxies.length === 0) {
           const kvPrx = await this.getKVPrxList();
-          const availableCountries = countryCodes.filter(code => kvPrx[code] && kvPrx[code].length > 0);
+          const availableCountries = countryCodes.filter(
+            (code) => kvPrx[code] && kvPrx[code].length > 0,
+          );
           if (availableCountries.length === 0) {
-            ws.close(1000, `No proxies available for countries: ${countryCodes.join(",")}`);
+            ws.close(
+              1000,
+              `No proxies available for countries: ${countryCodes.join(",")}`,
+            );
             return;
           }
-          const prxKey = availableCountries[Math.floor(Math.random() * availableCountries.length)];
-          this.prxIP = kvPrx[prxKey][Math.floor(Math.random() * kvPrx[prxKey].length)];
+          const prxKey =
+            availableCountries[
+              Math.floor(Math.random() * availableCountries.length)
+            ];
+          this.prxIP =
+            kvPrx[prxKey][Math.floor(Math.random() * kvPrx[prxKey].length)];
         } else {
-          const filteredProxies = proxies.filter(proxy => countryCodes.includes(proxy.country));
+          const filteredProxies = proxies.filter((proxy) =>
+            countryCodes.includes(proxy.country),
+          );
           if (filteredProxies.length === 0) {
-            ws.close(1000, `No proxies available for countries: ${countryCodes.join(",")}`);
+            ws.close(
+              1000,
+              `No proxies available for countries: ${countryCodes.join(",")}`,
+            );
             return;
           }
-          const randomProxy = filteredProxies[Math.floor(Math.random() * filteredProxies.length)];
+          const randomProxy =
+            filteredProxies[Math.floor(Math.random() * filteredProxies.length)];
           this.prxIP = `${randomProxy.prxIP}:${randomProxy.prxPort}`;
         }
 
-        console.log(`Selected Proxy (/PROXYLIST/${countryCodes.join(",")}): ${this.prxIP}`);
+        console.log(
+          `Selected Proxy (/PROXYLIST/${countryCodes.join(",")}): ${this.prxIP}`,
+        );
         await this.websocketHandler(ws);
         return;
       }
@@ -868,13 +985,17 @@ class GatewayServer {
           const kvPrx = await this.getKVPrxList();
           const allProxies = Object.values(kvPrx).flat();
           if (allProxies.length === 0) {
-            ws.close(1000, `No proxies available for /ALL${index !== null ? index + 1 : ""}`);
+            ws.close(
+              1000,
+              `No proxies available for /ALL${index !== null ? index + 1 : ""}`,
+            );
             return;
           }
-          this.prxIP = allProxies[Math.floor(Math.random() * allProxies.length)];
+          this.prxIP =
+            allProxies[Math.floor(Math.random() * allProxies.length)];
         } else {
           let selectedProxy;
-          
+
           if (index === null) {
             selectedProxy = proxies[Math.floor(Math.random() * proxies.length)];
           } else {
@@ -897,13 +1018,16 @@ class GatewayServer {
               return;
             }
 
-            selectedProxy = proxiesByIndex[Math.floor(Math.random() * proxiesByIndex.length)];
+            selectedProxy =
+              proxiesByIndex[Math.floor(Math.random() * proxiesByIndex.length)];
           }
 
           this.prxIP = `${selectedProxy.prxIP}:${selectedProxy.prxPort}`;
         }
 
-        console.log(`Selected Proxy (/ALL${index !== null ? index + 1 : ""}): ${this.prxIP}`);
+        console.log(
+          `Selected Proxy (/ALL${index !== null ? index + 1 : ""}): ${this.prxIP}`,
+        );
         await this.websocketHandler(ws);
         return;
       }
@@ -916,10 +1040,15 @@ class GatewayServer {
 
         if (proxies.length === 0) {
           const kvPrx = await this.getKVPrxList();
-          const countries = Object.keys(kvPrx).filter(code => kvPrx[code] && kvPrx[code].length > 0);
-          
+          const countries = Object.keys(kvPrx).filter(
+            (code) => kvPrx[code] && kvPrx[code].length > 0,
+          );
+
           if (countries.length === 0) {
-            ws.close(1000, `No proxies available for /PUTAR${countryCount || ""}`);
+            ws.close(
+              1000,
+              `No proxies available for /PUTAR${countryCount || ""}`,
+            );
             return;
           }
 
@@ -928,11 +1057,18 @@ class GatewayServer {
             selectedCountries = countries;
           } else {
             const shuffled = [...countries].sort(() => Math.random() - 0.5);
-            selectedCountries = shuffled.slice(0, Math.min(countryCount, countries.length));
+            selectedCountries = shuffled.slice(
+              0,
+              Math.min(countryCount, countries.length),
+            );
           }
 
-          const prxKey = selectedCountries[Math.floor(Math.random() * selectedCountries.length)];
-          this.prxIP = kvPrx[prxKey][Math.floor(Math.random() * kvPrx[prxKey].length)];
+          const prxKey =
+            selectedCountries[
+              Math.floor(Math.random() * selectedCountries.length)
+            ];
+          this.prxIP =
+            kvPrx[prxKey][Math.floor(Math.random() * kvPrx[prxKey].length)];
         } else {
           const groupedByCountry = proxies.reduce((acc, proxy) => {
             if (!acc[proxy.country]) acc[proxy.country] = [];
@@ -951,19 +1087,27 @@ class GatewayServer {
             selectedCountries = countries;
           } else {
             const shuffled = [...countries].sort(() => Math.random() - 0.5);
-            selectedCountries = shuffled.slice(0, Math.min(countryCount, countries.length));
+            selectedCountries = shuffled.slice(
+              0,
+              Math.min(countryCount, countries.length),
+            );
           }
 
-          const selectedProxies = selectedCountries.map(country => {
+          const selectedProxies = selectedCountries.map((country) => {
             const countryProxies = groupedByCountry[country];
-            return countryProxies[Math.floor(Math.random() * countryProxies.length)];
+            return countryProxies[
+              Math.floor(Math.random() * countryProxies.length)
+            ];
           });
 
-          const randomProxy = selectedProxies[Math.floor(Math.random() * selectedProxies.length)];
+          const randomProxy =
+            selectedProxies[Math.floor(Math.random() * selectedProxies.length)];
           this.prxIP = `${randomProxy.prxIP}:${randomProxy.prxPort}`;
         }
 
-        console.log(`Selected Proxy (/PUTAR${countryCount || ""}): ${this.prxIP}`);
+        console.log(
+          `Selected Proxy (/PUTAR${countryCount || ""}): ${this.prxIP}`,
+        );
         await this.websocketHandler(ws);
         return;
       }
@@ -973,7 +1117,7 @@ class GatewayServer {
       if (regionMatch) {
         const regionKey = regionMatch[1].toUpperCase();
         const index = regionMatch[2] ? parseInt(regionMatch[2], 10) - 1 : null;
-        
+
         if (REGION_MAP[regionKey] !== undefined) {
           const countries = REGION_MAP[regionKey];
           const proxies = await this.getPrxList(process.env.PRX_BANK_URL);
@@ -981,7 +1125,7 @@ class GatewayServer {
           if (proxies.length === 0) {
             const kvPrx = await this.getKVPrxList();
             let availableProxies = [];
-            
+
             if (regionKey === "GLOBAL") {
               availableProxies = Object.values(kvPrx).flat();
             } else {
@@ -998,18 +1142,25 @@ class GatewayServer {
             }
 
             if (index === null) {
-              this.prxIP = availableProxies[Math.floor(Math.random() * availableProxies.length)];
+              this.prxIP =
+                availableProxies[
+                  Math.floor(Math.random() * availableProxies.length)
+                ];
             } else {
               if (index < 0 || index >= availableProxies.length) {
-                ws.close(1000, `Index ${index + 1} out of range for region ${regionKey}`);
+                ws.close(
+                  1000,
+                  `Index ${index + 1} out of range for region ${regionKey}`,
+                );
                 return;
               }
               this.prxIP = availableProxies[index];
             }
           } else {
-            const filteredProxies = regionKey === "GLOBAL" 
-              ? proxies
-              : proxies.filter(p => countries.includes(p.country));
+            const filteredProxies =
+              regionKey === "GLOBAL"
+                ? proxies
+                : proxies.filter((p) => countries.includes(p.country));
 
             if (filteredProxies.length === 0) {
               ws.close(1000, `No proxies available for region: ${regionKey}`);
@@ -1018,10 +1169,16 @@ class GatewayServer {
 
             let selectedProxy;
             if (index === null) {
-              selectedProxy = filteredProxies[Math.floor(Math.random() * filteredProxies.length)];
+              selectedProxy =
+                filteredProxies[
+                  Math.floor(Math.random() * filteredProxies.length)
+                ];
             } else {
               if (index < 0 || index >= filteredProxies.length) {
-                ws.close(1000, `Index ${index + 1} out of range for region ${regionKey}`);
+                ws.close(
+                  1000,
+                  `Index ${index + 1} out of range for region ${regionKey}`,
+                );
                 return;
               }
               selectedProxy = filteredProxies[index];
@@ -1030,7 +1187,9 @@ class GatewayServer {
             this.prxIP = `${selectedProxy.prxIP}:${selectedProxy.prxPort}`;
           }
 
-          console.log(`Selected Proxy (/${regionKey}${index !== null ? index + 1 : ""}): ${this.prxIP}`);
+          console.log(
+            `Selected Proxy (/${regionKey}${index !== null ? index + 1 : ""}): ${this.prxIP}`,
+          );
           await this.websocketHandler(ws);
           return;
         }
@@ -1040,9 +1199,11 @@ class GatewayServer {
       const countryMatch = path.match(/^\/([A-Z]{2})(\d+)?$/);
       if (countryMatch) {
         const countryCode = countryMatch[1].toUpperCase();
-        const index = countryMatch[2] ? parseInt(countryMatch[2], 10) - 1 : null;
+        const index = countryMatch[2]
+          ? parseInt(countryMatch[2], 10) - 1
+          : null;
         const proxies = await this.getPrxList(process.env.PRX_BANK_URL);
-        
+
         if (proxies.length === 0) {
           const kvPrx = await this.getKVPrxList();
           if (!kvPrx[countryCode] || kvPrx[countryCode].length === 0) {
@@ -1051,16 +1212,24 @@ class GatewayServer {
           }
 
           if (index === null) {
-            this.prxIP = kvPrx[countryCode][Math.floor(Math.random() * kvPrx[countryCode].length)];
+            this.prxIP =
+              kvPrx[countryCode][
+                Math.floor(Math.random() * kvPrx[countryCode].length)
+              ];
           } else {
             if (index < 0 || index >= kvPrx[countryCode].length) {
-              ws.close(1000, `Index ${index + 1} out of range for country ${countryCode}`);
+              ws.close(
+                1000,
+                `Index ${index + 1} out of range for country ${countryCode}`,
+              );
               return;
             }
             this.prxIP = kvPrx[countryCode][index];
           }
         } else {
-          const filteredProxies = proxies.filter(proxy => proxy.country === countryCode);
+          const filteredProxies = proxies.filter(
+            (proxy) => proxy.country === countryCode,
+          );
           if (filteredProxies.length === 0) {
             ws.close(1000, `No proxies available for country: ${countryCode}`);
             return;
@@ -1068,10 +1237,16 @@ class GatewayServer {
 
           let selectedProxy;
           if (index === null) {
-            selectedProxy = filteredProxies[Math.floor(Math.random() * filteredProxies.length)];
+            selectedProxy =
+              filteredProxies[
+                Math.floor(Math.random() * filteredProxies.length)
+              ];
           } else {
             if (index < 0 || index >= filteredProxies.length) {
-              ws.close(1000, `Index ${index + 1} out of range for country ${countryCode}`);
+              ws.close(
+                1000,
+                `Index ${index + 1} out of range for country ${countryCode}`,
+              );
               return;
             }
             selectedProxy = filteredProxies[index];
@@ -1080,7 +1255,9 @@ class GatewayServer {
           this.prxIP = `${selectedProxy.prxIP}:${selectedProxy.prxPort}`;
         }
 
-        console.log(`Selected Proxy (/${countryCode}${index !== null ? index + 1 : ""}): ${this.prxIP}`);
+        console.log(
+          `Selected Proxy (/${countryCode}${index !== null ? index + 1 : ""}): ${this.prxIP}`,
+        );
         await this.websocketHandler(ws);
         return;
       }
@@ -1095,13 +1272,14 @@ class GatewayServer {
       }
 
       // Format lama untuk kompatibilitas
-      if (path.length === 4 || path.includes(',')) {
+      if (path.length === 4 || path.includes(",")) {
         const prxKeys = path.replace("/", "").toUpperCase().split(",");
         const prxKey = prxKeys[Math.floor(Math.random() * prxKeys.length)];
         const kvPrx = await this.getKVPrxList();
 
         if (kvPrx[prxKey] && kvPrx[prxKey].length > 0) {
-          this.prxIP = kvPrx[prxKey][Math.floor(Math.random() * kvPrx[prxKey].length)];
+          this.prxIP =
+            kvPrx[prxKey][Math.floor(Math.random() * kvPrx[prxKey].length)];
           console.log(`Legacy Proxy (/${prxKeys.join(",")}): ${this.prxIP}`);
           await this.websocketHandler(ws);
           return;
@@ -1113,8 +1291,8 @@ class GatewayServer {
 
       ws.close(1000, "Invalid WebSocket path format");
     } catch (err) {
-      console.error('WebSocket connection error:', err);
-      ws.close(1011, 'Internal server error');
+      console.error("WebSocket connection error:", err);
+      ws.close(1011, "Internal server error");
     }
   }
 
@@ -1127,7 +1305,7 @@ class GatewayServer {
 
     let remoteSocketWrapper = { value: null };
 
-    ws.on('message', async (message) => {
+    ws.on("message", async (message) => {
       try {
         const chunk = Buffer.from(message);
 
@@ -1163,7 +1341,7 @@ class GatewayServer {
             chunk.slice(protocolHeader.rawDataIndex),
             ws,
             protocolHeader.version,
-            log
+            log,
           );
         }
 
@@ -1174,24 +1352,24 @@ class GatewayServer {
           protocolHeader.rawClientData,
           ws,
           protocolHeader.version,
-          log
+          log,
         );
       } catch (err) {
-        console.error('Error processing WebSocket message:', err);
+        console.error("Error processing WebSocket message:", err);
         ws.close(1011, err.message);
       }
     });
 
-    ws.on('close', () => {
+    ws.on("close", () => {
       if (remoteSocketWrapper.value) {
         remoteSocketWrapper.value.end();
       }
       this.cleanupUDPConnections(ws);
-      log('WebSocket closed');
+      log("WebSocket closed");
     });
 
-    ws.on('error', (err) => {
-      console.error('WebSocket error:', err);
+    ws.on("error", (err) => {
+      console.error("WebSocket error:", err);
       this.cleanupUDPConnections(ws);
     });
   }
@@ -1202,8 +1380,16 @@ class GatewayServer {
     if (buffer.length >= 62) {
       const horseDelimiter = buffer.slice(56, 60);
       if (horseDelimiter[0] === 0x0d && horseDelimiter[1] === 0x0a) {
-        if (horseDelimiter[2] === 0x01 || horseDelimiter[2] === 0x03 || horseDelimiter[2] === 0x7f) {
-          if (horseDelimiter[3] === 0x01 || horseDelimiter[3] === 0x03 || horseDelimiter[3] === 0x04) {
+        if (
+          horseDelimiter[2] === 0x01 ||
+          horseDelimiter[2] === 0x03 ||
+          horseDelimiter[2] === 0x7f
+        ) {
+          if (
+            horseDelimiter[3] === 0x01 ||
+            horseDelimiter[3] === 0x03 ||
+            horseDelimiter[3] === 0x04
+          ) {
             return horse;
           }
         }
@@ -1211,26 +1397,41 @@ class GatewayServer {
     }
 
     const flashDelimiter = buffer.slice(1, 17);
-    const hex = flashDelimiter.toString('hex');
-    if (hex.match(/^[0-9a-f]{8}[0-9a-f]{4}4[0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$/i)) {
+    const hex = flashDelimiter.toString("hex");
+    if (
+      hex.match(
+        /^[0-9a-f]{8}[0-9a-f]{4}4[0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$/i,
+      )
+    ) {
       return flash;
     }
 
     return "ss";
   }
 
-  async handleTCPOutBound(remoteSocket, addressRemote, portRemote, rawClientData, webSocket, responseHeader, log) {
+  async handleTCPOutBound(
+    remoteSocket,
+    addressRemote,
+    portRemote,
+    rawClientData,
+    webSocket,
+    responseHeader,
+    log,
+  ) {
     const connectAndWrite = (address, port) => {
       return new Promise((resolve, reject) => {
-        const tcpSocket = net.createConnection({
-          host: address,
-          port: port
-        }, () => {
-          log(`connected to ${address}:${port}`);
-          tcpSocket.write(rawClientData);
-          resolve(tcpSocket);
-        });
-        tcpSocket.on('error', reject);
+        const tcpSocket = net.createConnection(
+          {
+            host: address,
+            port: port,
+          },
+          () => {
+            log(`connected to ${address}:${port}`);
+            tcpSocket.write(rawClientData);
+            resolve(tcpSocket);
+          },
+        );
+        tcpSocket.on("error", reject);
       });
     };
 
@@ -1238,12 +1439,16 @@ class GatewayServer {
       try {
         const tcpSocket = await connectAndWrite(
           this.prxIP.split(/[:=-]/)[0] || addressRemote,
-          this.prxIP.split(/[:=-]/)[1] || portRemote
+          this.prxIP.split(/[:=-]/)[1] || portRemote,
         );
         remoteSocket.value = tcpSocket;
-        
-        tcpSocket.on('close', () => { webSocket.close(); });
-        tcpSocket.on('error', (error) => { webSocket.close(); });
+
+        tcpSocket.on("close", () => {
+          webSocket.close();
+        });
+        tcpSocket.on("error", (error) => {
+          webSocket.close();
+        });
 
         this.remoteSocketToWS(tcpSocket, webSocket, responseHeader, null, log);
       } catch (error) {
@@ -1254,9 +1459,13 @@ class GatewayServer {
     try {
       const tcpSocket = await connectAndWrite(addressRemote, portRemote);
       remoteSocket.value = tcpSocket;
-      
-      tcpSocket.on('close', () => { webSocket.close(); });
-      tcpSocket.on('error', (error) => { webSocket.close(); });
+
+      tcpSocket.on("close", () => {
+        webSocket.close();
+      });
+      tcpSocket.on("error", (error) => {
+        webSocket.close();
+      });
 
       this.remoteSocketToWS(tcpSocket, webSocket, responseHeader, retry, log);
     } catch (error) {
@@ -1266,20 +1475,30 @@ class GatewayServer {
 
   // ==================== UDP NATIVE HANDLER ====================
 
-  async handleUDPOutbound(targetAddress, targetPort, dataChunk, webSocket, responseHeader, log) {
+  async handleUDPOutbound(
+    targetAddress,
+    targetPort,
+    dataChunk,
+    webSocket,
+    responseHeader,
+    log,
+  ) {
     return new Promise((resolve) => {
       try {
         let protocolHeader = responseHeader;
         const connectionKey = `${targetAddress}:${targetPort}:${Date.now()}`;
-        const udpSocket = dgram.createSocket('udp4');
-        
+        const udpSocket = dgram.createSocket("udp4");
+
         this.activeUDPConnections.set(connectionKey, {
           socket: udpSocket,
-          webSocket: webSocket
+          webSocket: webSocket,
         });
-        
-        udpSocket.on('error', (error) => {
-          console.error(`[UDP Socket Error] ${targetAddress}:${targetPort} ->`, error.message);
+
+        udpSocket.on("error", (error) => {
+          console.error(
+            `[UDP Socket Error] ${targetAddress}:${targetPort} ->`,
+            error.message,
+          );
           try {
             udpSocket.close();
           } catch (_) {}
@@ -1289,16 +1508,21 @@ class GatewayServer {
         udpSocket.send(dataChunk, targetPort, targetAddress, (error) => {
           if (error) {
             console.error(`[UDP Send Error]`, error.message);
-            try { udpSocket.close(); } catch (_) {}
+            try {
+              udpSocket.close();
+            } catch (_) {}
             this.activeUDPConnections.delete(connectionKey);
             return;
           }
         });
-        
-        udpSocket.on('message', (message, rinfo) => {
+
+        udpSocket.on("message", (message, rinfo) => {
           if (webSocket.readyState === WebSocket.OPEN) {
             if (protocolHeader) {
-              const combined = Buffer.concat([Buffer.from(protocolHeader), message]);
+              const combined = Buffer.concat([
+                Buffer.from(protocolHeader),
+                message,
+              ]);
               webSocket.send(combined);
               protocolHeader = null;
             } else {
@@ -1306,28 +1530,31 @@ class GatewayServer {
             }
           }
         });
-        
-        udpSocket.on('close', () => {
+
+        udpSocket.on("close", () => {
           this.activeUDPConnections.delete(connectionKey);
         });
-        
+
         let idleTimeout = setTimeout(() => {
           if (udpSocket) {
-            try { udpSocket.close(); } catch (_) {}
+            try {
+              udpSocket.close();
+            } catch (_) {}
             this.activeUDPConnections.delete(connectionKey);
           }
         }, 30000);
-        
-        udpSocket.on('message', () => {
+
+        udpSocket.on("message", () => {
           clearTimeout(idleTimeout);
           idleTimeout = setTimeout(() => {
             if (udpSocket) {
-              try { udpSocket.close(); } catch (_) {}
+              try {
+                udpSocket.close();
+              } catch (_) {}
               this.activeUDPConnections.delete(connectionKey);
             }
           }, 30000);
         });
-        
       } catch (e) {
         console.error(`Error in UDP handler execution: ${e.message}`);
       }
@@ -1354,27 +1581,39 @@ class GatewayServer {
     switch (addressType) {
       case 1:
         addressLength = 4;
-        addressValue = Array.from(ssBuffer.slice(addressValueIndex, addressValueIndex + addressLength)).join(".");
+        addressValue = Array.from(
+          ssBuffer.slice(addressValueIndex, addressValueIndex + addressLength),
+        ).join(".");
         break;
       case 3:
         addressLength = ssBuffer[addressValueIndex];
         addressValueIndex += 1;
-        addressValue = ssBuffer.slice(addressValueIndex, addressValueIndex + addressLength).toString();
+        addressValue = ssBuffer
+          .slice(addressValueIndex, addressValueIndex + addressLength)
+          .toString();
         break;
       case 4:
         addressLength = 16;
         const ipv6 = [];
         for (let i = 0; i < 8; i++) {
-          ipv6.push(ssBuffer.readUInt16BE(addressValueIndex + i * 2).toString(16));
+          ipv6.push(
+            ssBuffer.readUInt16BE(addressValueIndex + i * 2).toString(16),
+          );
         }
         addressValue = ipv6.join(":");
         break;
       default:
-        return { hasError: true, message: `Invalid addressType for SS: ${addressType}` };
+        return {
+          hasError: true,
+          message: `Invalid addressType for SS: ${addressType}`,
+        };
     }
 
     if (!addressValue) {
-      return { hasError: true, message: `Destination address empty, address type is: ${addressType}` };
+      return {
+        hasError: true,
+        message: `Destination address empty, address type is: ${addressType}`,
+      };
     }
 
     const portIndex = addressValueIndex + addressLength;
@@ -1397,47 +1636,59 @@ class GatewayServer {
 
     const optLength = buffer[17];
     const cmd = buffer[18 + optLength];
-    
+
     if (cmd === 2) {
       isUDP = true;
     } else if (cmd !== 1) {
       return { hasError: true, message: `command ${cmd} is not supported` };
     }
-    
+
     const portIndex = 18 + optLength + 1;
     const portRemote = buffer.readUInt16BE(portIndex);
 
     let addressIndex = portIndex + 2;
     const addressType = buffer[addressIndex];
-    
+
     let addressLength = 0;
     let addressValueIndex = addressIndex + 1;
     let addressValue = "";
-    
+
     switch (addressType) {
       case 1:
         addressLength = 4;
-        addressValue = Array.from(buffer.slice(addressValueIndex, addressValueIndex + addressLength)).join(".");
+        addressValue = Array.from(
+          buffer.slice(addressValueIndex, addressValueIndex + addressLength),
+        ).join(".");
         break;
       case 2:
         addressLength = buffer[addressValueIndex];
         addressValueIndex += 1;
-        addressValue = buffer.slice(addressValueIndex, addressValueIndex + addressLength).toString();
+        addressValue = buffer
+          .slice(addressValueIndex, addressValueIndex + addressLength)
+          .toString();
         break;
       case 3:
         addressLength = 16;
         const ipv6 = [];
         for (let i = 0; i < 8; i++) {
-          ipv6.push(buffer.readUInt16BE(addressValueIndex + i * 2).toString(16));
+          ipv6.push(
+            buffer.readUInt16BE(addressValueIndex + i * 2).toString(16),
+          );
         }
         addressValue = ipv6.join(":");
         break;
       default:
-        return { hasError: true, message: `invalid addressType is ${addressType}` };
+        return {
+          hasError: true,
+          message: `invalid addressType is ${addressType}`,
+        };
     }
-    
+
     if (!addressValue) {
-      return { hasError: true, message: `addressValue is empty, addressType is ${addressType}` };
+      return {
+        hasError: true,
+        message: `addressValue is empty, addressType is ${addressType}`,
+      };
     }
 
     return {
@@ -1470,31 +1721,46 @@ class GatewayServer {
     let addressLength = 0;
     let addressValueIndex = 2;
     let addressValue = "";
-    
+
     switch (addressType) {
       case 1:
         addressLength = 4;
-        addressValue = Array.from(dataBuffer.slice(addressValueIndex, addressValueIndex + addressLength)).join(".");
+        addressValue = Array.from(
+          dataBuffer.slice(
+            addressValueIndex,
+            addressValueIndex + addressLength,
+          ),
+        ).join(".");
         break;
       case 3:
         addressLength = dataBuffer[addressValueIndex];
         addressValueIndex += 1;
-        addressValue = dataBuffer.slice(addressValueIndex, addressValueIndex + addressLength).toString();
+        addressValue = dataBuffer
+          .slice(addressValueIndex, addressValueIndex + addressLength)
+          .toString();
         break;
       case 4:
         addressLength = 16;
         const ipv6 = [];
         for (let i = 0; i < 8; i++) {
-          ipv6.push(dataBuffer.readUInt16BE(addressValueIndex + i * 2).toString(16));
+          ipv6.push(
+            dataBuffer.readUInt16BE(addressValueIndex + i * 2).toString(16),
+          );
         }
         addressValue = ipv6.join(":");
         break;
       default:
-        return { hasError: true, message: `invalid addressType is ${addressType}` };
+        return {
+          hasError: true,
+          message: `invalid addressType is ${addressType}`,
+        };
     }
 
     if (!addressValue) {
-      return { hasError: true, message: `address is empty, addressType is ${addressType}` };
+      return {
+        hasError: true,
+        message: `address is empty, addressType is ${addressType}`,
+      };
     }
 
     const portIndex = addressValueIndex + addressLength;
@@ -1515,7 +1781,7 @@ class GatewayServer {
     let header = responseHeader;
     let hasIncomingData = false;
 
-    remoteSocket.on('data', (chunk) => {
+    remoteSocket.on("data", (chunk) => {
       hasIncomingData = true;
       if (webSocket.readyState !== WS_READY_STATE_OPEN) {
         remoteSocket.destroy();
@@ -1530,13 +1796,13 @@ class GatewayServer {
       }
     });
 
-    remoteSocket.on('close', () => {
+    remoteSocket.on("close", () => {
       if (hasIncomingData === false && retry) {
         retry();
       }
     });
 
-    remoteSocket.on('error', (error) => {
+    remoteSocket.on("error", (error) => {
       console.error(`remoteSocket error:`, error);
     });
   }
@@ -1545,24 +1811,24 @@ class GatewayServer {
 
   start(port = process.env.PORT || 3000) {
     const server = http.createServer((req, res) => {
-      this.handleHttpRequest(req, res).catch(error => {
-        console.error('HTTP handler error:', error);
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Internal Server Error');
+      this.handleHttpRequest(req, res).catch((error) => {
+        console.error("HTTP handler error:", error);
+        res.writeHead(500, { "Content-Type": "text/plain" });
+        res.end("Internal Server Error");
       });
     });
 
-    this.wss = new WebSocket.Server({ 
+    this.wss = new WebSocket.Server({
       server,
-      perMessageDeflate: false
+      perMessageDeflate: false,
     });
 
-    this.wss.on('connection', (ws, req) => {
+    this.wss.on("connection", (ws, req) => {
       this.handleWebSocketConnection(ws, req);
     });
 
     const gracefulShutdown = () => {
-      console.log('Shutting down gracefully...');
+      console.log("Shutting down gracefully...");
       if (this.wss) {
         this.wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
@@ -1571,35 +1837,37 @@ class GatewayServer {
         });
         this.wss.close();
       }
-      
+
       for (const [key, connection] of this.activeUDPConnections.entries()) {
         try {
           connection.socket.close();
         } catch (err) {}
       }
       this.activeUDPConnections.clear();
-      
+
       if (this.httpServer) {
         this.httpServer.close(() => {
-          console.log('HTTP server closed');
+          console.log("HTTP server closed");
           process.exit(0);
         });
       }
-      setTimeout(() => { process.exit(1); }, 10000);
+      setTimeout(() => {
+        process.exit(1);
+      }, 10000);
     };
 
-    process.on('SIGTERM', gracefulShutdown);
-    process.on('SIGINT', gracefulShutdown);
+    process.on("SIGTERM", gracefulShutdown);
+    process.on("SIGINT", gracefulShutdown);
 
-    server.listen(port, '0.0.0.0', () => {
+    server.listen(port, "0.0.0.0", () => {
       console.log(`✅ Gateway server running on port ${port}`);
     });
 
     this.httpServer = server;
-    
-    server.on('error', (error) => {
-      console.error('Server error:', error);
-      if (error.code === 'EADDRINUSE') {
+
+    server.on("error", (error) => {
+      console.error("Server error:", error);
+      if (error.code === "EADDRINUSE") {
         console.error(`Port ${port} is already in use`);
         process.exit(1);
       }
@@ -1610,7 +1878,7 @@ class GatewayServer {
 if (require.main === module) {
   const server = new GatewayServer();
   try {
-    require('dotenv').config();
+    require("dotenv").config();
   } catch (e) {}
   const port = process.env.PORT || 3000;
   server.start(port);
