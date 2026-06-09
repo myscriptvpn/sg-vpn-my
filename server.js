@@ -459,7 +459,7 @@ class GatewayServer {
                 <div class="space-y-4">
                   <div>
                     <label class="text-xs text-slate-400 font-medium mb-1.5 block">UUID / Password</label>
-                    <div class="flex flex-col gap-2 mb-2">
+                    <div class="flex gap-2">
                       <input id="uuidInput" type="text" value="853b8456-0c0b-4bfa-b3b4-b2619248a9bc" 
                              class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-blue-500 focus:outline-none transition">
                       <button id="randomUuidBtn" class="bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg text-xs transition flex items-center gap-1 whitespace-nowrap">
@@ -506,8 +506,8 @@ class GatewayServer {
                     <label class="text-xs text-slate-400 font-medium mb-1.5 block">
                       <i class="fa-solid fa-fingerprint text-purple-400 mr-1"></i> SNI (Server Name Indication)
                     </label>
-                    <div class="flex gap-2 mb-2">
-                      <select id="sniSelect" 
+                    <div class="flex flex-col gap-2 mb-2">
+                      <select id="sniSelect"
                               class="bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-purple-500 focus:outline-none transition flex-1">
                         <option value="live.iflix.com">live.iflix.com</option>
                         <option value="v.whatsapp.net">v.whatsapp.net</option>
@@ -515,9 +515,9 @@ class GatewayServer {
                         <option value="web.whatsapp.com">web.whatsapp.com</option>
                         <option value="business.whatsapp.com">business.whatsapp.com</option>
                         <option value="media-sin6-3.cdn.whatsapp.net">media-sin6-3.cdn.whatsapp.net</option>
-                        <option value="custom">✏️ CUSTOM SNI...</option>
+                        <option value="custom">CUSTOM</option>
                       </select>
-                      <input id="sniInput" type="text" value="live.iflix.com" 
+                      <input id="sniInput" type="text" value="live.iflix.com"
                              class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-purple-500 focus:outline-none transition"
                              placeholder="Custom SNI...">
                     </div>
