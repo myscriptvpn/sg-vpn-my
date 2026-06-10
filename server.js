@@ -504,6 +504,30 @@ class GatewayServer {
                   <!-- SNI CUSTOM SECTION -->
                   <div>
                     <label class="text-xs text-slate-400 font-medium mb-1.5 block">
+                      <i class="fa-solid fa-fingerprint text-purple-400 mr-1"></i>
+                      SNI (Server Name Indication)
+                    </label>
+
+                    <select id="sniSelect"
+                      class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono">
+                      <option value="live.iflix.com">live.iflix.com</option>
+                      <option value="v.whatsapp.net">v.whatsapp.net</option>
+                      <option value="business.whatsapp.com">business.whatsapp.com</option>
+                      <option value="custom">✏️ CUSTOM SNI...</option>
+                    </select>
+
+                    <div id="customSniWrap" class="hidden mt-2">
+                      <input
+                        id="sniInput"
+                        type="text"
+                        placeholder="Masukkan custom SNI..."
+                        class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono">
+                    </div>
+                  </div>
+
+                  <!--
+                  <div>
+                    <label class="text-xs text-slate-400 font-medium mb-1.5 block">
                       <i class="fa-solid fa-fingerprint text-purple-400 mr-1"></i> SNI (Server Name Indication)
                     </label>
                     <div class="flex flex-col gap-2 mb-2">
@@ -523,6 +547,8 @@ class GatewayServer {
                     </div>
                     <p class="text-[10px] text-slate-600">Pilih dari daftar atau ketik manual SNI custom</p>
                   </div>
+                  -->
+
 
                   <div>
                     <label class="text-xs text-slate-400 font-medium mb-1.5 block">Nama / Remark</label>
@@ -657,7 +683,12 @@ class GatewayServer {
                 const host = hostEl.value.trim() || '${currentHost}';
                 const port = portEl.value.trim() || '443';
                 const path = pathEl.value.trim() || '/ALL';
-                const sni = sniEl.value.trim() || 'business.whatsapp.com';
+//                const sni = sniEl.value.trim() || 'business.whatsapp.com';
+                const sni =
+                  sniSelect.value === 'custom'
+                    ? sniInput.value.trim()
+                    : sniSelect.value;
+
                 const remark = remarkEl.value.trim() || 'KOPI KAPAL';
 
                 const encodedPath = encodeURIComponent(path);
@@ -744,21 +775,37 @@ class GatewayServer {
               }
 
               // SNI select
-              const sniSelect = document.getElementById('sniSelect');
-              if (sniSelect) {
-                sniSelect.addEventListener('change', function() {
-                  const sniInput = document.getElementById('sniInput');
-                  if (sniInput) {
-                    if (this.value === 'custom') {
-                      sniInput.value = '';
-                      sniInput.focus();
-                    } else {
-                      sniInput.value = this.value;
-                      generateAccounts();
-                    }
+//              const sniSelect = document.getElementById('sniSelect');
+//              if (sniSelect) {
+//                sniSelect.addEventListener('change', function() {
+//                  const sniInput = document.getElementById('sniInput');
+//                  if (sniInput) {
+//                    if (this.value === 'custom') {
+//                      sniInput.value = '';
+//                      sniInput.focus();
+//                    } else {
+//                      sniInput.value = this.value;
+//                      generateAccounts();
+//                    }
+//                  }
+//                });
+//              }
+                const sniSelect = document.getElementById('sniSelect');
+                const customSniWrap = document.getElementById('customSniWrap');
+                const sniInput = document.getElementById('sniInput');
+
+                sniSelect.addEventListener('change', function () {
+
+                  if (this.value === 'custom') {
+                    customSniWrap.classList.remove('hidden');
+                    sniInput.focus();
+                  } else {
+                    customSniWrap.classList.add('hidden');
+                    sniInput.value = '';
                   }
+
+                  generateAccounts();
                 });
-              }
 
               // Generate button
               const genBtn = document.getElementById('generateBtn');
