@@ -503,27 +503,27 @@ class GatewayServer {
 
                   <!-- SNI CUSTOM SECTION -->
                   <div>
-                    <label class="text-xs text-slate-400 font-medium mb-1.5 block">
-                      <i class="fa-solid fa-fingerprint text-purple-400 mr-1"></i>
-                      SNI (Server Name Indication)
-                    </label>
+  <label class="text-xs text-slate-400 font-medium mb-1.5 block">
+    <i class="fa-solid fa-fingerprint text-purple-400 mr-1"></i>
+    SNI (Server Name Indication)
+  </label>
 
-                    <select id="sniSelect"
-                      class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono">
-                      <option value="live.iflix.com">live.iflix.com</option>
-                      <option value="v.whatsapp.net">v.whatsapp.net</option>
-                      <option value="business.whatsapp.com">business.whatsapp.com</option>
-                      <option value="custom">✏️ CUSTOM SNI...</option>
-                    </select>
+  <select id="sniSelect"
+    class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-blue-500 focus:outline-none transition">
+    <option value="live.iflix.com">live.iflix.com</option>
+    <option value="v.whatsapp.net">v.whatsapp.net</option>
+    <option value="business.whatsapp.com">business.whatsapp.com</option>
+    <option value="custom">✏️ CUSTOM SNI...</option>
+  </select>
 
-                    <div id="customSniWrap" class="hidden mt-2">
-                      <input
-                        id="sniInput"
-                        type="text"
-                        placeholder="Masukkan custom SNI..."
-                        class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono">
-                    </div>
-                  </div>
+  <div id="customSniWrap" class="hidden mt-2">
+    <input
+      id="sniInput"
+      type="text"
+      placeholder="Masukkan custom SNI..."
+      class="w-full bg-[#10121d] border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-blue-500 focus:outline-none transition">
+  </div>
+</div>
 
                   <!--
                   <div>
